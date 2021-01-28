@@ -8,7 +8,7 @@ import scala.concurrent.Future
 
 object FirstPrinciples extends App {
 
-  implicit val system = ActorSystem("FirstPrinciples")
+  implicit val system: ActorSystem = ActorSystem("FirstPrinciples")
   implicit val materialize: ActorMaterializer = ActorMaterializer()
 
   // sources
@@ -57,19 +57,21 @@ object FirstPrinciples extends App {
 
   // source -> flow -> flow -> ... -> sink
   val doubleFlowGraph = source.via(mapFlow).via(takeFlow).to(sink)
-  doubleFlowGraph.run()
+//  doubleFlowGraph.run()
 
   // syntactic sugars
   val mapSource = Source(1 to 10).map(x => x * 2)
                   Source(1 to 10).via(Flow[Int].map(x => x * 2))
   // run streams directly
-  mapSource.runForeach(println)
+//  mapSource.runForeach(println)
   // equivalent to
-  mapSource.to(Sink.foreach[Int](println)).run()
+//  mapSource.to(Sink.foreach[Int](println)).run()
 
   // OPERATORS = components
   /**
    * Exercise: create a stream that takes the names of persons, then you will keep the first 2 names with length > 5 characters
    *
    */
+
+  Source(List("Joao", "Maria", "Guilherme", "Akka", "Nicolas")).map(x => if (x.length > 5) x).runForeach(println)
 }
