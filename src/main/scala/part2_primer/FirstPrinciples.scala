@@ -73,5 +73,13 @@ object FirstPrinciples extends App {
    *
    */
 
-  Source(List("Joao", "Maria", "Guilherme", "Akka", "Nicolas")).map(x => if (x.length > 5) x).runForeach(println)
+  Source(List("Joao", "Maria", "Guilherme", "Akka", "Nicolas", "AkkaStreams")).filter(x => x.length > 5).take(2).runForeach(println)
+
+  val names = List("Alice", "Bob", "Charlie", "David", "Martin", "AkkaStreams")
+  val nameSource = Source(names)
+  val longNameFlow = Flow[String].filter(name => name.length > 5)
+  val limitFlow = Flow[String].take(2)
+  val nameSink = Sink.foreach[String](println)
+
+  nameSource.via(longNameFlow).via(limitFlow).to(nameSink).run()
 }
