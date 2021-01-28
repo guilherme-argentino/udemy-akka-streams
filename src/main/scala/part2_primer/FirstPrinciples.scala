@@ -7,7 +7,7 @@ import akka.stream.scaladsl.{Sink, Source}
 object FirstPrinciples extends App {
 
   implicit val system = ActorSystem("FirstPrinciples")
-  val materializer = ActorMaterializer()
+  implicit val materializer = ActorMaterializer()
 
   // sources
   val source = Source(1 to 10)
@@ -16,5 +16,5 @@ object FirstPrinciples extends App {
   val sink = Sink.foreach[Int](println)
 
   val graph = source.to(sink)
-  graph.run()(materializer)
+  graph.run()
 }
