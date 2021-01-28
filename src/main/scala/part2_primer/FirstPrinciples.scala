@@ -5,6 +5,6 @@ import akka.stream.ActorMaterializer
 
 object FirstPrinciples extends App {
 
-  val system = ActorSystem("FirstPrinciples")
-  val materializer = ActorMaterializer()(system)
+  implicit val system = ActorSystem("FirstPrinciples")
+  val materializer = ActorMaterializer()
 }
