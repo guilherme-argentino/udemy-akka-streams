@@ -1,8 +1,8 @@
 package part3_graphs
 
 import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, ClosedShape, SinkShape, SourceShape}
-import akka.stream.scaladsl.{Broadcast, Concat, GraphDSL, RunnableGraph, Sink, Source}
+import akka.stream.{ActorMaterializer, ClosedShape, FlowShape, SinkShape, SourceShape}
+import akka.stream.scaladsl.{Balance, Broadcast, Concat, Flow, GraphDSL, Merge, RunnableGraph, Sink, Source, Zip}
 
 object OpenGraphs extends App {
 
@@ -66,4 +66,46 @@ object OpenGraphs extends App {
    * - one that adds 1 to a number
    * - one that does number * 10
    */
+  val incrementer = Flow[Int].map(x => x + 1)
+  val multiplier = Flow[Int].map(x => x * 10)
+
+  // step 1
+  val flowGraph = Flow.fromGraph(
+    GraphDSL.create() { implicit builder =>
+      import GraphDSL.Implicits._
+
+      // everything operates on SHAPES
+
+      // step 2: define auxiliary SHAPES
+      val incrementerShape = builder.add(incrementer)
+      val multiplierShape = builder.add(multiplier)
+
+      // step 3: connect the SHAPES
+      incrementerShape ~> multiplierShape
+
+      // step 4
+      FlowShape(incrementerShape.in, multiplierShape.out) // SHAPE
+    } // static graph
+  ) // component
+
+  firstSource.via(flowGraph).to(Sink.foreach(println)).run()
+
+  /**
+   * Exercise: flow from a sink and a source
+   */
+  def fromSinkAndSource[A, B](sink: Sink[A, _], source: Source[B, _]): Flow[A, B, _] = {
+    // step 1
+    Flow.fromGraph(
+      GraphDSL.create() { implicit builder =>
+        // step 2: declare the SHAPES
+        val sourceShape = builder.add(source)
+        val sinkShape = builder.add(sink)
+        // step 3
+        // step 4 - return the shape
+        FlowShape(sinkShape.in, sourceShape.out)
+      }
+    )
+  }
+
+  val f = Flow.fromSinkAndSource(Sink.foreach[String](println), Source(1 to 10))
 }
