@@ -2,7 +2,9 @@ package part3_graphs
 
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, SinkShape}
-import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Sink, Source}
+import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Keep, Sink, Source}
+
+import scala.util.{Failure, Success}
 
 object GraphMaterializedValues extends App  {
 
@@ -21,7 +23,7 @@ object GraphMaterializedValues extends App  {
 
   // step 1
   val complexWordSink = Sink.fromGraph(
-    GraphDSL.create() { implicit builder =>
+    GraphDSL.create(counter) { implicit builder => counterShape =>
       import GraphDSL.Implicits._
 
       // step 2 - SHAPES
@@ -31,10 +33,17 @@ object GraphMaterializedValues extends App  {
 
       // step 3 - connections
       broadcast ~> lowercaseFilter ~> printer
-      broadcast ~> shortStringFilter ~> counter
+      broadcast ~> shortStringFilter ~> counterShape
 
       // step 4 - the shape
       SinkShape(broadcast.in)
     }
   )
+
+  import system.dispatcher
+  val shortStringsCountFuture = wordSource.toMat(complexWordSink)(Keep.right).run()
+  shortStringsCountFuture.onComplete {
+    case Success(count) => println(s"The total number of short strings is: $count")
+    case Failure(exception) => println(s"The count of short strings failed: $exception")
+  }
 }
