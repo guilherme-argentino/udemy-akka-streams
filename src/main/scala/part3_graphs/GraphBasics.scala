@@ -17,7 +17,7 @@ object GraphBasics extends App {
 
   // step 1 - setting up the fundamentals for the graph
   val graph = RunnableGraph.fromGraph(
-    GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
+    GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] => // builder = MUTABLE data structure
       import GraphDSL.Implicits._ // brings some nice operators into scope
 
       // step 2 - add the necessary components of this graph
@@ -28,15 +28,35 @@ object GraphBasics extends App {
       input ~> broadcast
 
       broadcast.out(0) ~> incrementer ~> zip.in0
-      broadcast.out(1) ~> multiplier // ~> zip.in1
+      broadcast.out(1) ~> multiplier ~> zip.in1
 
       zip.out ~> output
 
       // step 4 - return a closed shape
-      ClosedShape
+      ClosedShape // FREEZE the builder's shape
       // shape
     } // graph
   ) // runnable graph
 
-  graph.run() // run the graph and materialize it
+  //  graph.run() // run the graph and materialize it
+
+  /**
+   * exercise 1: feed a source into 2 sinks at the same time (hint: use a broadcast)
+   */
+
+  RunnableGraph.fromGraph(
+    GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
+      import GraphDSL.Implicits._
+
+      val broadcast = builder.add(Broadcast[Int](2))
+
+      input ~> broadcast
+
+      broadcast.out(0) ~> Sink.foreach[Int](println)
+      broadcast.out(1) ~> Sink.foreach[Int](println)
+
+      ClosedShape
+
+    }
+  ).run()
 }
