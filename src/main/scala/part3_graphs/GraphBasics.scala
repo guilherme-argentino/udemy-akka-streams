@@ -59,4 +59,25 @@ object GraphBasics extends App {
 
     }
   ).run()
+
+  val firstSink = Sink.foreach[Int](x => println(s"First Sink: $x"))
+  val secondSink = Sink.foreach[Int](x => println(s"Second Sink: $x"))
+
+  // step 1
+  val sourceToTwoSinksGraph = RunnableGraph.fromGraph(
+    GraphDSL.create() { implicit builder =>
+      import GraphDSL.Implicits._
+
+      // step 2 - declaring the components
+      val broadcast = builder.add(Broadcast[Int](2))
+
+      // step 3 - tying up the components
+      input ~> broadcast
+      broadcast.out(0) ~> firstSink
+      broadcast.out(1) ~> secondSink
+
+      // step 4
+      ClosedShape
+    }
+  )
 }
