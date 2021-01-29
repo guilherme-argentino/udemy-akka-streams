@@ -28,7 +28,7 @@ object GraphBasics extends App {
       input ~> broadcast
 
       broadcast.out(0) ~> incrementer ~> zip.in0
-      broadcast.out(1) ~> multiplier ~> zip.in1
+      broadcast.out(1) ~> multiplier // ~> zip.in1
 
       zip.out ~> output
 
