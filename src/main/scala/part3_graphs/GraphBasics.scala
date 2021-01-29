@@ -87,8 +87,8 @@ object GraphBasics extends App {
   /**
    * Exercise 2
    */
-  val fastSource = Source(1 to 1000)
-  val slowSource = Source(1 to 1000).throttle(2, 1 second)
+  val fastSourceAttempt = Source(1 to 1000)
+  val slowSourceAttempt = Source(1 to 1000).throttle(2, 1 second)
 
   // step 1
   RunnableGraph.fromGraph(
@@ -100,8 +100,8 @@ object GraphBasics extends App {
       val balance = builder.add(Balance[Int](2))
 
       // step 3 - tying up the components
-      fastSource ~> merge
-      slowSource ~> merge
+      fastSourceAttempt ~> merge
+      slowSourceAttempt ~> merge
       balance ~> firstSink
       balance ~> secondSink
       merge ~> balance
@@ -109,5 +109,29 @@ object GraphBasics extends App {
       // step 4
       ClosedShape
     }
-  ).run()
+  )//.run()
+
+  val fastSource = input.throttle(5, 1 second)
+  val slowSource = input.throttle(2, 1 second)
+
+  val sink1 = Sink.foreach[Int](x => println(s"Sink 1: $x"))
+  val sink2 = Sink.foreach[Int](x => println(s"Sink 2: $x"))
+
+  val balanceGraph = RunnableGraph.fromGraph(
+    GraphDSL.create() { implicit builder =>
+      import GraphDSL.Implicits._
+
+      // step 2 -- declare components
+      val merge = builder.add(Merge[Int](2))
+      val balance = builder.add(Balance[Int](2))
+
+      // step 3 -- tie them up
+      fastSource ~> merge ~> balance ~> sink1
+      slowSource ~> merge ;  balance ~> sink2
+
+      // step 4
+      ClosedShape
+    }
+  )
+  balanceGraph.run()
 }
