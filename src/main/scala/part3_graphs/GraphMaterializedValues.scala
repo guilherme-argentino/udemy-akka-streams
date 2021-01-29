@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, SinkShape}
 import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Keep, Sink, Source}
 
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 object GraphMaterializedValues extends App  {
@@ -23,7 +24,7 @@ object GraphMaterializedValues extends App  {
 
   // step 1
   val complexWordSink = Sink.fromGraph(
-    GraphDSL.create(counter) { implicit builder => counterShape =>
+    GraphDSL.create(printer, counter)((printerMatValue, counterMatValue) => counterMatValue) { implicit builder => (printerShape, counterShape) =>
       import GraphDSL.Implicits._
 
       // step 2 - SHAPES
@@ -32,7 +33,7 @@ object GraphMaterializedValues extends App  {
       val shortStringFilter = builder.add(Flow[String].filter(_.length < 5))
 
       // step 3 - connections
-      broadcast ~> lowercaseFilter ~> printer
+      broadcast ~> lowercaseFilter ~> printerShape
       broadcast ~> shortStringFilter ~> counterShape
 
       // step 4 - the shape
@@ -46,4 +47,13 @@ object GraphMaterializedValues extends App  {
     case Success(count) => println(s"The total number of short strings is: $count")
     case Failure(exception) => println(s"The count of short strings failed: $exception")
   }
+
+  /**
+   * Exercise
+   */
+  def enhanceFlow[A, B](flow: Flow[A, B, _]): Flow[A, B, Future[Int]] = ???
+
+  /*
+    Hint: use a broadcast and Sink.fold
+   */
 }
