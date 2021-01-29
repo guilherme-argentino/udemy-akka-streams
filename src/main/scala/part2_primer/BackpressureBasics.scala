@@ -16,7 +16,8 @@ object BackpressureBasics extends App {
     println(s"Sink: $x")
   }
 
-  fastSource.to(slowSink).run() // fusing?!
+  //  fastSource.to(slowSink).run() // fusing?!
   // not backpressure
 
+  fastSource.async.to(slowSink).run()
 }
