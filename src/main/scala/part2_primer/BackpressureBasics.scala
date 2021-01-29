@@ -45,5 +45,26 @@ object BackpressureBasics extends App {
   fastSource.async
     .via(bufferedFlow).async
     .to(slowSink)
-    .run()
+//    .run()
+
+  /*
+    1-16: nobody is backpressured
+    17-26: flow will buffer, flow will start dropping at the next element
+    26-1000: flow will always drop the oldest element
+      => 991-1000 => 992-1001 => sink
+   */
+
+  /*
+    overflow strategies:
+    - drop head = oldest
+    - drop tail = newest
+    - drop new = exact element to be added = keeps the buffer
+    - drop the entire buffer
+    - backpressure signal
+    - fail
+   */
+
+  // throttling
+  import scala.concurrent.duration._
+  fastSource.throttle(2, 1 second).runWith(Sink.foreach(println))
 }
