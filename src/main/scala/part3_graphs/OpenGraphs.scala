@@ -107,5 +107,5 @@ object OpenGraphs extends App {
     )
   }
 
-  val f = Flow.fromSinkAndSource(Sink.foreach[String](println), Source(1 to 10))
+  val f = Flow.fromSinkAndSourceCoupled(Sink.foreach[String](println), Source(1 to 10))
 }
