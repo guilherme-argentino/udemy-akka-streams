@@ -9,7 +9,7 @@ import scala.util.{Failure, Success}
 object MaterializingStreams extends App {
 
 
-  implicit val system: ActorSystem = ActorSystem("FirstPrinciples")
+  implicit val system: ActorSystem = ActorSystem("MaterializingStreams")
   implicit val materialize: ActorMaterializer = ActorMaterializer()
 
   import system.dispatcher
