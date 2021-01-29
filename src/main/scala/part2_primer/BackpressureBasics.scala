@@ -1,7 +1,7 @@
 package part2_primer
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.{Flow, Sink, Source}
 
 object BackpressureBasics extends App {
@@ -29,5 +29,21 @@ object BackpressureBasics extends App {
 
   fastSource.async
     .via(simpleFlow).async
-    .to(slowSink).run()
+    .to(slowSink)
+//    .run()
+
+  /*
+    reactions to backpressure (in order):
+    - try to slow down if possible
+    - buffer elements until there's more demand
+    - drop down elements from the buffer if it overflows
+    - tear down/kill the whole stream (failure)
+   */
+
+  val bufferedFlow = simpleFlow.buffer(10, overflowStrategy = OverflowStrategy.dropHead)
+
+  fastSource.async
+    .via(bufferedFlow).async
+    .to(slowSink)
+    .run()
 }
