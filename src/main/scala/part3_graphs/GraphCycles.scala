@@ -1,7 +1,7 @@
 package part3_graphs
 
 import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, ClosedShape}
+import akka.stream.{ActorMaterializer, ClosedShape, OverflowStrategy}
 import akka.stream.scaladsl.{Flow, GraphDSL, Merge, MergePreferred, RunnableGraph, Source}
 
 object GraphCycles extends App {
@@ -48,7 +48,28 @@ object GraphCycles extends App {
     ClosedShape
   }
 
-  RunnableGraph.fromGraph(actualAccelerator).run()
+  //  RunnableGraph.fromGraph(actualAccelerator).run()
 
+  /*
+    Solution 2: buffers
+   */
 
+  val bufferedRepeater = GraphDSL.create() { implicit builder =>
+    import GraphDSL.Implicits._
+
+    val sourceShape = builder.add(Source(1 to 100))
+    val mergeShape = builder.add(Merge[Int](2))
+    val repeaterShape = builder.add(Flow[Int].buffer(10, OverflowStrategy.dropHead)map { x =>
+      println(s"Accelerating $x")
+      Thread.sleep(100)
+      x
+    })
+
+    sourceShape ~> mergeShape ~> repeaterShape
+    mergeShape <~ repeaterShape
+
+    ClosedShape
+  }
+
+  RunnableGraph.fromGraph(bufferedRepeater).run()
 }
