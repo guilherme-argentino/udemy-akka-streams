@@ -51,7 +51,17 @@ object AdvancedBackpressure extends App {
     })
     .map(resultingEvent => Notification(oncallEngineer, resultingEvent))
 
-  eventSource.via(aggregateNotificationFlow).to(Sink.foreach[Notification](sendEmailSlow)).run()
+  //  eventSource.via(aggregateNotificationFlow).to(Sink.foreach[Notification](sendEmailSlow)).run()
   // alternative to backpressure
 
+  /*
+    Slow producers: extrapolate/expand
+   */
+  import scala.concurrent.duration._
+  val slowCounter = Source(Stream.from(1)).throttle(1, 1 second)
+  val hungrySink = Sink.foreach[Int](println)
+
+  val extrapolation = Flow[Int].extrapolate(element => Iterator.from(element))
+
+  slowCounter.via(extrapolation).to(hungrySink).run()
 }
