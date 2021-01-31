@@ -62,6 +62,9 @@ object AdvancedBackpressure extends App {
   val hungrySink = Sink.foreach[Int](println)
 
   val extrapolation = Flow[Int].extrapolate(element => Iterator.from(element))
+  val repeater = Flow[Int].extrapolate(element => Iterator.continually(element))
 
-  slowCounter.via(extrapolation).to(hungrySink).run()
+  slowCounter.via(repeater).to(hungrySink).run()
+
+  val expander = Flow[Int].expand(element => Iterator.from(element))
 }
