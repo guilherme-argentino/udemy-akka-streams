@@ -11,6 +11,15 @@ object FaultTolerance extends App {
 
   // 1 - logging
   val faultySource = Source(1 to 10).map(e => if(e == 6) throw new RuntimeException else e)
-  faultySource.log("trackingElements").to(Sink.ignore).run()
+  faultySource.log("trackingElements").to(Sink.ignore)
+  //    .run()
+
+  // 2 - gracefully terminating a stream
+  faultySource.recover {
+    case _: RuntimeException => Int.MinValue
+  } .log("gracefulSource")
+    .to(Sink.ignore)
+    .run()
+
 
 }
