@@ -2,7 +2,10 @@ package part4_techniques
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.scaladsl.{RestartSource, Sink, Source}
+
+import scala.concurrent.duration._
+import scala.util.Random
 
 object FaultTolerance extends App {
 
@@ -25,6 +28,18 @@ object FaultTolerance extends App {
   faultySource.recoverWithRetries(3, {
     case _: RuntimeException => Source(90 to 99)
   }).log("recoverWithRetries")
+    .to(Sink.ignore)
+  //    .run()
+
+  // 4 - backoff supervision
+  val restartSource = RestartSource.onFailuresWithBackoff(
+    minBackoff = 1 second,
+    maxBackoff = 30 seconds,
+    randomFactor = 0.2
+  )(() => {
+    val randomNumber = new Random().nextInt(20)
+    Source(1 to 10).map(elem => if(elem == randomNumber) throw new RuntimeException else elem)
+  }).log("restartBackoff")
     .to(Sink.ignore)
     .run()
 }
