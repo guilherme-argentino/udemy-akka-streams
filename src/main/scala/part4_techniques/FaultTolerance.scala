@@ -19,7 +19,12 @@ object FaultTolerance extends App {
     case _: RuntimeException => Int.MinValue
   } .log("gracefulSource")
     .to(Sink.ignore)
+  //    .run()
+
+  // 3 - recover with another stream
+  faultySource.recoverWithRetries(3, {
+    case _: RuntimeException => Source(90 to 99)
+  }).log("recoverWithRetries")
+    .to(Sink.ignore)
     .run()
-
-
 }
